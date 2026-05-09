@@ -1,0 +1,6 @@
+{
+  "name": "Twitch Follows",
+  "description": "Discover any Twitch user's following list. Search by username to see who they followed and when.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
