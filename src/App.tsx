@@ -251,12 +251,12 @@ export default function App() {
 
       {/* Hero / Search Section */}
       <main className="flex-1 flex flex-col p-4 md:p-8 gap-8 max-w-7xl mx-auto w-full">
-        <div className="flex flex-col gap-4 max-w-md w-full">
+        <div className="flex flex-col gap-4 w-full">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white">Search Follows</h1>
-          <p className="text-zinc-400 text-base">
-            Enter a username to display their following and followers.
+          <p className="text-zinc-400 text-base whitespace-nowrap">
+            Enter a username to display who they follow and who follows them.
           </p>
-          <form onSubmit={handleSearch} className="relative group mt-4 h-14 md:h-16">
+          <form onSubmit={handleSearch} className="relative group mt-4 h-14 md:h-16 max-w-md">
             <input
               id="username-input"
               type="text"
