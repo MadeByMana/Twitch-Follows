@@ -82,11 +82,6 @@ export default function App() {
           <span className="font-bold text-xl tracking-tight">Twitch<span className="text-[#a970ff]">Follows</span></span>
         </div>
         <div className="hidden md:flex items-center gap-6 text-sm font-medium text-zinc-400">
-          <span className="hover:text-white cursor-pointer transition-colors">Explorer</span>
-          <span className="hover:text-white cursor-pointer transition-colors">Documentation</span>
-          <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-          </div>
         </div>
       </nav>
 
