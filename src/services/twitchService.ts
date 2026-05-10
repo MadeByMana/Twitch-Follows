@@ -28,30 +28,65 @@ const FOLLOWS_QUERY = `
   }
 `;
 
-export async function fetchFollows(login: string, cursor: string | null = null): Promise<TwitchProfile | null> {
+export async function fetchFollows(login: string): Promise<TwitchProfile | null> {
+  const allEdges: any[] = [];
+  let currentCursor: string | null = null;
+  let hasNextPage = true;
+  let profile: any = null;
+
   try {
-    const response = await axios.post('/api/twitch-gql', {
-      operationName: 'UserFollowingList',
-      query: FOLLOWS_QUERY,
-      variables: {
-        login: login.toLowerCase().trim(),
-        ...(cursor && { cursor })
+    while (hasNextPage) {
+      const response = await axios.post('/api/twitch-gql', {
+        operationName: 'UserFollowingList',
+        query: FOLLOWS_QUERY,
+        variables: {
+          login: login.toLowerCase().trim(),
+          ...(currentCursor && { cursor: currentCursor })
+        }
+      });
+
+      if (response.data?.errors) {
+        console.error('Twitch GQL Success with Errors:', JSON.stringify(response.data.errors, null, 2));
+        throw new Error(response.data.errors[0]?.message || 'GraphQL Error');
       }
-    });
 
-    if (response.data?.errors) {
-      console.error('Twitch GQL Success with Errors:', JSON.stringify(response.data.errors, null, 2));
-      throw new Error(response.data.errors[0]?.message || 'GraphQL Error');
+      const user = response.data?.data?.user;
+      if (!user) break;
+
+      if (!profile) {
+        profile = {
+          id: user.id,
+          login: user.login,
+          displayName: user.displayName,
+          profileImageURL: user.profileImageURL,
+        };
+      }
+
+      if (user.follows?.edges) {
+        allEdges.push(...user.follows.edges);
+      }
+
+      hasNextPage = user.follows?.pageInfo?.hasNextPage || false;
+      currentCursor = user.follows?.pageInfo?.endCursor || null;
+
+      // Safety break to prevent infinite loops or excessive memory usage
+      // Twitch following count can be large, but let's limit it to a reasonable number for this preview
+      // Most users follow < 2000 channels.
+      if (allEdges.length > 5000) break;
     }
 
-    const user = response.data?.data?.user;
-    if (user && user.follows) {
-      // Map 'follows' back to our internal 'following' property if we want to keep types unchanged,
-      // or update types. Let's just update the user object we return.
-      user.following = user.follows;
+    if (profile) {
+      profile.following = {
+        totalCount: allEdges.length,
+        edges: allEdges,
+        pageInfo: {
+          hasNextPage: false,
+          endCursor: null
+        }
+      };
     }
 
-    return user || null;
+    return profile;
   } catch (error) {
     console.error('Error fetching follows:', error);
     throw error;

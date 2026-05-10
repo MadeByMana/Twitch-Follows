@@ -16,8 +16,6 @@ export default function App() {
   const [follows, setFollows] = useState<FollowEdge[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [loadingMore, setLoadingMore] = useState(false);
 
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -27,14 +25,12 @@ export default function App() {
     setError(null);
     setProfile(null);
     setFollows([]);
-    setCursor(null);
 
     try {
       const data = await fetchFollows(username);
       if (data) {
         setProfile(data);
         setFollows(data.following.edges);
-        setCursor(data.following.pageInfo.endCursor);
       } else {
         setError('User not found. Check the username and try again.');
       }
@@ -56,23 +52,6 @@ export default function App() {
       setError(displayMessage);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadMore = async () => {
-    if (!profile || !cursor || loadingMore) return;
-
-    setLoadingMore(true);
-    try {
-      const data = await fetchFollows(profile.login, cursor);
-      if (data) {
-        setFollows(prev => [...prev, ...data.following.edges]);
-        setCursor(data.following.pageInfo.endCursor);
-      }
-    } catch (err) {
-      console.error('Error loading more:', err);
-    } finally {
-      setLoadingMore(false);
     }
   };
 
@@ -239,7 +218,7 @@ export default function App() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-1.5" id={`date-${follow.node.id}`}>
                           <Calendar className="w-3 h-3 text-[#a970ff]" />
                           <p className="text-sm font-bold text-zinc-200">{new Date(follow.followedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                         </div>
@@ -250,18 +229,6 @@ export default function App() {
                     </motion.div>
                   ))}
                 </div>
-
-                {cursor && (
-                  <div className="mt-8 flex items-center justify-center p-4 bg-zinc-900/30 rounded-xl border border-dashed border-zinc-800">
-                    <button 
-                      onClick={loadMore}
-                      disabled={loadingMore}
-                      className="text-zinc-400 text-sm font-bold hover:text-[#a970ff] transition-colors uppercase tracking-widest flex items-center gap-2"
-                    >
-                      {loadingMore ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Load More Timeline Data...'}
-                    </button>
-                  </div>
-                )}
               </div>
             </motion.div>
           )}
