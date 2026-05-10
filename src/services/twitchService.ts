@@ -1,33 +1,31 @@
 import axios from 'axios';
 import { TwitchProfile } from '../types';
 
-const DATA_QUERY = `
-  query UserData($login: String!, $followCursor: Cursor, $followerCursor: Cursor) {
+const USER_BASE_QUERY = `
+  query GetDataA($login: String!) {
     user(login: $login) {
       id
       login
       displayName
       profileImageURL(width: 150)
-      follows(first: 100, after: $followCursor) {
+      following: follows(first: 1, order: DESC) {
         totalCount
-        edges {
-          followedAt
-          node {
-            id
-            login
-            displayName
-            profileImageURL(width: 70)
-          }
-        }
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
       }
-      followers(first: 100, after: $followerCursor) {
+      followers(first: 1, order: DESC) {
+        totalCount
+      }
+    }
+  }
+`;
+
+const FOLLOWS_QUERY = `
+  query GetDataB($login: String!, $cursor: Cursor) {
+    user(login: $login) {
+      follows(first: 100, after: $cursor, order: DESC) {
         totalCount
         edges {
           followedAt
+          cursor
           node {
             id
             login
@@ -44,104 +42,163 @@ const DATA_QUERY = `
   }
 `;
 
-export async function fetchFollows(login: string): Promise<TwitchProfile | null> {
-  const followEdges: any[] = [];
-  const followerEdges: any[] = [];
-  let followCursor: string | null = null;
-  let followerCursor: string | null = null;
-  let hasNextFollowPage = true;
-  let hasNextFollowerPage = true;
-  let profile: any = null;
-
-  try {
-    // Initial fetch to get profile and first batch of both
-    const initialResponse = await axios.post('/api/twitch-gql', {
-      operationName: 'UserData',
-      query: DATA_QUERY,
-      variables: {
-        login: login.toLowerCase().trim(),
-        followCursor: null,
-        followerCursor: null
+const FOLLOWERS_QUERY = `
+  query GetDataC($login: String!, $cursor: Cursor) {
+    user(login: $login) {
+      followers(first: 100, after: $cursor, order: DESC) {
+        totalCount
+        edges {
+          followedAt
+          cursor
+          node {
+            id
+            login
+            displayName
+            profileImageURL(width: 70)
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
       }
+    }
+  }
+`;
+
+export async function fetchProfile(login: string): Promise<TwitchProfile | null> {
+  console.log('[Service] fetchProfile:', login);
+  try {
+    const loginLower = login.toLowerCase().trim();
+    
+    const response = await axios.post('/internal/data/stream', {
+      opName: 'GetDataA',
+      query: `
+        query GetDataA($login: String!) {
+          user(login: $login) {
+            id
+            login
+            displayName
+            profileImageURL(width: 150)
+            following: follows(first: 100, order: DESC) {
+              totalCount
+              edges {
+                followedAt
+                cursor
+                node {
+                  id
+                  login
+                  displayName
+                  profileImageURL(width: 70)
+                }
+              }
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+            }
+            followers(first: 100, order: DESC) {
+              totalCount
+              edges {
+                followedAt
+                cursor
+                node {
+                  id
+                  login
+                  displayName
+                  profileImageURL(width: 70)
+                }
+              }
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+            }
+          }
+        }
+      `,
+      variables: { login: loginLower }
     });
 
-    if (initialResponse.data?.errors) {
-      console.error('Twitch GQL Success with Errors:', JSON.stringify(initialResponse.data.errors, null, 2));
-      throw new Error(initialResponse.data.errors[0]?.message || 'GraphQL Error');
+    if (response.data?.errors) {
+      const msg = response.data.errors[0]?.message || 'GraphQL Error';
+      console.error('[Service] QueryA Errors:', response.data.errors);
+      throw new Error(msg);
     }
 
-    const user = initialResponse.data?.data?.user;
+    const user = response.data?.data?.user;
     if (!user) return null;
 
-    profile = {
-      id: user.id,
-      login: user.login,
-      displayName: user.displayName,
-      profileImageURL: user.profileImageURL,
+    return {
+      id: user.id as string,
+      login: user.login as string,
+      displayName: user.displayName as string,
+      profileImageURL: user.profileImageURL as string,
+      following: {
+        totalCount: (user.following?.totalCount || 0) as number,
+        edges: (user.following?.edges || []) as any[],
+        pageInfo: (user.following?.pageInfo || { hasNextPage: false, endCursor: null })
+      },
+      followers: {
+        totalCount: (user.followers?.totalCount || 0) as number,
+        edges: (user.followers?.edges || []) as any[],
+        pageInfo: (user.followers?.pageInfo || { hasNextPage: false, endCursor: null })
+      }
     };
-
-    // Process initial follows
-    if (user.follows?.edges) followEdges.push(...user.follows.edges);
-    hasNextFollowPage = user.follows?.pageInfo?.hasNextPage || false;
-    followCursor = user.follows?.pageInfo?.endCursor || null;
-
-    // Process initial followers
-    if (user.followers?.edges) followerEdges.push(...user.followers.edges);
-    hasNextFollowerPage = user.followers?.pageInfo?.hasNextPage || false;
-    followerCursor = user.followers?.pageInfo?.endCursor || null;
-
-    // Fetch remaining follows if any
-    while (hasNextFollowPage && followEdges.length < 5000) {
-      const resp = await axios.post('/api/twitch-gql', {
-        operationName: 'UserData',
-        query: DATA_QUERY,
-        variables: {
-          login: login.toLowerCase().trim(),
-          followCursor,
-          followerCursor: null // Not used in this loop
-        }
-      });
-      const u = resp.data?.data?.user;
-      if (!u || !u.follows) break;
-      followEdges.push(...u.follows.edges);
-      hasNextFollowPage = u.follows.pageInfo.hasNextPage;
-      followCursor = u.follows.pageInfo.endCursor;
-    }
-
-    // Fetch remaining followers if any
-    while (hasNextFollowerPage && followerEdges.length < 5000) {
-      const resp = await axios.post('/api/twitch-gql', {
-        operationName: 'UserData',
-        query: DATA_QUERY,
-        variables: {
-          login: login.toLowerCase().trim(),
-          followCursor: null, // Not used in this loop
-          followerCursor
-        }
-      });
-      const u = resp.data?.data?.user;
-      if (!u || !u.followers) break;
-      followerEdges.push(...u.followers.edges);
-      hasNextFollowerPage = u.followers.pageInfo.hasNextPage;
-      followerCursor = u.followers.pageInfo.endCursor;
-    }
-
-    if (profile) {
-      profile.following = {
-        totalCount: user.follows?.totalCount || followEdges.length,
-        edges: followEdges,
-        pageInfo: { hasNextPage: false, endCursor: null }
-      };
-      profile.followers = {
-        totalCount: user.followers?.totalCount || followerEdges.length,
-        edges: followerEdges,
-        pageInfo: { hasNextPage: false, endCursor: null }
-      };
-    }
-
-    return profile;
   } catch (error) {
-    console.error('Error fetching data:', error);
+    console.error('[Service] Error in fetchProfile:', error);
+    throw error;
+  }
+}
+
+export async function fetchFollowsPage(login: string, cursor: string | null): Promise<any> {
+  console.log('[Service] fetchFollowsPage:', login, cursor);
+  try {
+    const loginLower = login.toLowerCase().trim();
+    const resp = await axios.post('/internal/data/stream', {
+      opName: 'GetDataB',
+      query: FOLLOWS_QUERY,
+      variables: { login: loginLower, cursor }
+    });
+
+    if (resp.data?.errors) {
+      const msg = `GetDataB Errors: ${JSON.stringify(resp.data.errors)}`;
+      console.error('[Service]', msg);
+      throw new Error(msg);
+    }
+    
+    return resp.data?.data?.user?.follows;
+  } catch (error: any) {
+    console.error('[Service] Error in fetchFollowsPage:', error);
+    throw error;
+  }
+}
+
+export async function fetchFollowersPage(login: string, cursor: string | null): Promise<any> {
+  console.log('[Service] fetchFollowersPage:', login, cursor);
+  try {
+    const loginLower = login.toLowerCase().trim();
+    const resp = await axios.post('/internal/data/stream', {
+      opName: 'GetDataC',
+      query: FOLLOWERS_QUERY,
+      variables: { login: loginLower, cursor }
+    });
+
+    if (resp.data?.errors) {
+      const msg = `GetDataC Errors: ${resp.data.errors[0]?.message || JSON.stringify(resp.data.errors)}`;
+      console.error('[Service]', msg);
+      throw new Error(msg);
+    }
+    
+    const followers = resp.data?.data?.user?.followers;
+    if (!followers) {
+      console.warn('[Service] No followers returned in QueryC');
+      return null;
+    }
+
+    return followers;
+  } catch (error: any) {
+    console.error('[Service] Error in fetchFollowersPage:', error);
     throw error;
   }
 }

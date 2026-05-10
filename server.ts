@@ -13,25 +13,31 @@ async function startServer() {
 
   app.use(express.json());
 
-  // Twitch GQL Proxy
-  app.post('/api/twitch-gql', async (req, res) => {
+  app.post('/internal/data/stream', async (req, res) => {
+    const { opName } = req.body;
     try {
+      console.log(`[Proxy] Process ${opName || 'unknown'}`);
       const response = await axios.post('https://gql.twitch.tv/gql', req.body, {
         headers: {
-          'Client-Id': '85lcqzxpb9bqu9z6ga1ol55du', // Mobile Client ID
+          'Client-ID': '85lcqzxpb9bqu9z6ga1ol55du', // Mobile Client ID
           'Content-Type': 'application/json',
-          'User-Agent': 'Twitch/16.9.1 (iPhone; iOS 17.5.1; Scale/3.00)',
+          'User-Agent': 'Twitch/15.8.1 (iPhone; iOS 15.5; Scale/2.00)',
           'X-Device-Id': '8b2e1a4d7c6f0a3b9e5d2c8f6a1b4e9f',
         },
       });
+
+      if (response.data?.errors) {
+        console.error('Remote Errors:', JSON.stringify(response.data.errors, null, 2));
+      }
+
       res.json(response.data);
     } catch (error: any) {
       const responseData = error.response?.data;
-      console.error('Twitch GQL Error Status:', error.response?.status);
-      console.error('Twitch GQL Error Data:', JSON.stringify(responseData, null, 2));
+      console.error('Proxy Error Status:', error.response?.status);
+      console.error('Proxy Error Data:', JSON.stringify(responseData, null, 2));
       
       res.status(error.response?.status || 500).json({ 
-        error: 'Failed to fetch from Twitch',
+        error: 'Terminal execution failed',
         details: responseData || error.message
       });
     }
