@@ -384,7 +384,7 @@ export default function App() {
                             </h4>
                             {isMutual && (
                               <span 
-                                className="inline-flex items-center justify-center px-2 rounded-full text-[9px] md:text-[10px] font-semibold bg-[#934afb]/15 text-[#934afb] border border-[#934afb]/30 shrink-0 pointer-events-none select-none leading-none translate-y-[0.5px]"
+                                className="inline-flex items-center justify-center px-2 rounded-full text-[9px] md:text-[10px] font-semibold bg-[#934afb]/15 text-[#934afb] border border-[#934afb]/30 shrink-0 pointer-events-none select-none leading-none translate-y-0 md:translate-y-[1.5px]"
                                 style={{ paddingBlock: 'calc(var(--spacing) * 1)' }}
                               >
                                 FOLLOWS BACK
