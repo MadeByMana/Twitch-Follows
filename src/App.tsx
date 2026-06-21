@@ -314,14 +314,14 @@ export default function App() {
                     onClick={() => handleToggleTab('following')}
                     className={`p-4 rounded-xl border transition-all text-left hover:border-[#934afb] cursor-pointer ${activeTab === 'following' ? 'bg-[#934afb]/10 border-[#934afb]' : 'bg-zinc-900/50 border-zinc-800/50'}`}
                   >
-                    <span className={`text-[10px] uppercase font-semibold tracking-wider block mb-1 ${activeTab === 'following' ? 'text-[#934afb]' : 'text-zinc-500 hover:text-[#934afb]/80 transition-colors'}`}>Following</span>
+                    <span className={`text-[10px] uppercase font-semibold block mb-1 ${activeTab === 'following' ? 'text-[#934afb]' : 'text-zinc-500 hover:text-[#934afb]/80 transition-colors'}`}>Following</span>
                     <p className="text-2xl font-semibold">{profile.following.totalCount.toLocaleString()}</p>
                   </button>
                   <button 
                     onClick={() => handleToggleTab('followers')}
                     className={`p-4 rounded-xl border transition-all text-left hover:border-[#934afb] cursor-pointer ${activeTab === 'followers' ? 'bg-[#934afb]/10 border-[#934afb]' : 'bg-zinc-900/50 border-zinc-800/50'}`}
                   >
-                    <span className={`text-[10px] uppercase font-semibold tracking-wider block mb-1 ${activeTab === 'followers' ? 'text-[#934afb]' : 'text-zinc-500 hover:text-[#934afb]/80 transition-colors'}`}>Followers</span>
+                    <span className={`text-[10px] uppercase font-semibold block mb-1 ${activeTab === 'followers' ? 'text-[#934afb]' : 'text-zinc-500 hover:text-[#934afb]/80 transition-colors'}`}>Followers</span>
                     <p className="text-2xl font-semibold">{profile.followers.totalCount.toLocaleString()}</p>
                   </button>
                 </div>
@@ -350,13 +350,13 @@ export default function App() {
                 <div className="flex gap-2">
                   <button 
                     onClick={() => setSortOrder('desc')}
-                    className={`inline-flex items-center justify-center px-3 py-1.5 rounded text-[10px] font-semibold tracking-wider transition-colors leading-none cursor-pointer ${sortOrder === 'desc' ? 'bg-[#934afb] text-white' : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'}`}
+                    className={`inline-flex items-center justify-center px-3 py-1.5 rounded text-[10px] font-semibold transition-colors leading-none cursor-pointer ${sortOrder === 'desc' ? 'bg-[#934afb] text-white' : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'}`}
                   >
                     NEWEST
                   </button>
                   <button 
                     onClick={() => setSortOrder('asc')}
-                    className={`inline-flex items-center justify-center px-3 py-1.5 rounded text-[10px] font-semibold tracking-wider transition-colors leading-none cursor-pointer ${sortOrder === 'asc' ? 'bg-[#934afb] text-white' : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'}`}
+                    className={`inline-flex items-center justify-center px-3 py-1.5 rounded text-[10px] font-semibold transition-colors leading-none cursor-pointer ${sortOrder === 'asc' ? 'bg-[#934afb] text-white' : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'}`}
                   >
                     OLDEST
                   </button>
@@ -370,22 +370,36 @@ export default function App() {
                     <div
                       key={`${follow.node.id}-${follow.followedAt}-${index}`}
                       onClick={() => handleSearch(undefined, follow.node.login)}
-                      className="bg-[#18181b] border border-transparent p-4 rounded-xl flex items-center justify-between group hover:border-[#934afb] transition-all hover:bg-[#1c1c21] cursor-pointer select-none"
+                      className="bg-[#18181b] border border-transparent p-4 md:p-5 rounded-xl flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 group hover:border-[#934afb] transition-all hover:bg-[#1c1c21] cursor-pointer select-none"
                     >
-                      <div className="flex items-center gap-4 min-w-0">
-                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden transition-colors shrink-0">
+                      <div className="flex items-start md:items-center gap-4 min-w-0 w-full md:w-auto">
+                        <div className="w-10 h-10 md:w-10 md:h-10 rounded-full overflow-hidden transition-colors shrink-0">
                           <img src={follow.node.profileImageURL} alt={follow.node.displayName} className="w-full h-full object-cover" />
                         </div>
-                        <div className="flex items-baseline gap-2 min-w-0">
-                          <h4 className="text-sm md:text-base tracking-tight group-hover:text-[#934afb] transition-colors truncate leading-normal py-1 -my-1">{follow.node.displayName}</h4>
-                          {isMutual && (
-                            <span className="inline-block px-2 py-1 rounded-full text-[10px] font-semibold bg-[#934afb]/15 text-[#934afb] border border-[#934afb]/30 shrink-0 pointer-events-none select-none leading-none align-baseline">
-                              FOLLOWS BACK
-                            </span>
-                          )}
+                        <div className="flex flex-col gap-1 min-w-0 flex-1 md:flex-initial">
+                          {/* First line: username and pill */}
+                          <div className="flex items-center gap-2 flex-wrap min-w-0">
+                            <h4 className="text-sm md:text-base tracking-tight font-medium group-hover:text-[#934afb] transition-colors truncate leading-none py-0.5">
+                              {follow.node.displayName}
+                            </h4>
+                            {isMutual && (
+                              <span className="inline-block px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-semibold bg-[#934afb]/15 text-[#934afb] border border-[#934afb]/30 shrink-0 pointer-events-none select-none leading-normal">
+                                FOLLOWS BACK
+                              </span>
+                            )}
+                          </div>
+                          {/* Second line on mobile: followed date */}
+                          <div className="md:hidden">
+                            <p className="text-xs text-zinc-400 leading-normal">
+                              <Calendar className="inline-block w-3 h-3 text-[#934afb] mr-1 align-baseline translate-y-[1px]" />
+                              Followed {new Date(follow.followedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })} at {new Date(follow.followedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                      <div className="text-right shrink-0 ml-4 opacity-80">
+                      
+                      {/* On desktop: displayed on the right side */}
+                      <div className="hidden md:block text-right shrink-0 ml-4 opacity-80">
                         <p className="text-sm text-zinc-400 whitespace-nowrap leading-normal py-1 -my-1">
                           <Calendar className="inline-block w-3.5 h-3.5 text-[#934afb] mr-1.5 align-baseline translate-y-[1.5px]" />
                           Followed {new Date(follow.followedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })} at {new Date(follow.followedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -396,15 +410,17 @@ export default function App() {
                 })}
               </div>
 
-              {/* Toggle to Show All or Show Less if there are more items to show */}
-              {(sortedFollows.length > 100 || hasMore) && (
+              {/* Toggle to Show All if there are more items to show */}
+              {(!showAll || loadingFollowing || loadingFollowers) && (sortedFollows.length > 100 || hasMore) && (
                 <div className="mt-6 flex flex-col justify-center items-center gap-2">
-                  <button
-                    onClick={() => setShowAll(prev => !prev)}
-                    className="flex items-center gap-2 px-8 py-3 bg-[#934afb] hover:bg-[#8035e8] text-white rounded-xl font-semibold transition-all border border-transparent hover:border-[#934afb]/20 active:scale-95"
-                  >
-                    {showAll ? 'Show Less (First 100)' : `Show All Data (${(activeTab === 'following' ? profile.following.totalCount : profile.followers.totalCount).toLocaleString()} items)`}
-                  </button>
+                  {!showAll && (
+                    <button
+                      onClick={() => setShowAll(true)}
+                      className="flex items-center gap-2 px-8 py-3 bg-[#934afb] hover:bg-[#8035e8] text-white rounded-xl font-semibold transition-all border border-transparent hover:border-[#934afb]/20 active:scale-95 cursor-pointer"
+                    >
+                      Show All Data ({(activeTab === 'following' ? profile.following.totalCount : profile.followers.totalCount).toLocaleString()} items)
+                    </button>
+                  )}
                   {(loadingFollowing || loadingFollowers) && (
                     <span className="text-xs text-zinc-500 font-mono">
                       Still syncing live in the background: {currentFollows.length.toLocaleString()} loaded so far...
