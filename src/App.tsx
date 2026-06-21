@@ -372,11 +372,11 @@ export default function App() {
                       onClick={() => handleSearch(undefined, follow.node.login)}
                       className="bg-[#18181b] border border-transparent p-4 md:p-5 rounded-xl flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 group hover:border-[#934afb] transition-all hover:bg-[#1c1c21] cursor-pointer select-none"
                     >
-                      <div className="flex items-start md:items-center gap-4 min-w-0 w-full md:w-auto">
+                      <div className="flex items-center gap-4 min-w-0 w-full md:w-auto">
                         <div className="w-10 h-10 md:w-10 md:h-10 rounded-full overflow-hidden transition-colors shrink-0">
                           <img src={follow.node.profileImageURL} alt={follow.node.displayName} className="w-full h-full object-cover" />
                         </div>
-                        <div className="flex flex-col gap-1 min-w-0 flex-1 md:flex-initial">
+                        <div className="flex flex-col gap-1.5 md:gap-1 min-w-0 flex-1 md:flex-initial">
                           {/* First line: username and pill */}
                           <div className="flex items-center gap-2 min-w-0 overflow-visible">
                             <h4 className="text-sm md:text-base tracking-tight font-medium group-hover:text-[#934afb] transition-colors overflow-visible whitespace-nowrap leading-none">
@@ -384,7 +384,7 @@ export default function App() {
                             </h4>
                             {isMutual && (
                               <span 
-                                className="inline-block px-2 rounded-full text-[9px] md:text-[10px] font-semibold bg-[#934afb]/15 text-[#934afb] border border-[#934afb]/30 shrink-0 pointer-events-none select-none leading-none translate-y-[1.5px]"
+                                className="inline-flex items-center justify-center px-2 rounded-full text-[9px] md:text-[10px] font-semibold bg-[#934afb]/15 text-[#934afb] border border-[#934afb]/30 shrink-0 pointer-events-none select-none leading-none translate-y-[0.5px]"
                                 style={{ paddingBlock: 'calc(var(--spacing) * 1)' }}
                               >
                                 FOLLOWS BACK
