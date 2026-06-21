@@ -378,12 +378,15 @@ export default function App() {
                         </div>
                         <div className="flex flex-col gap-1 min-w-0 flex-1 md:flex-initial">
                           {/* First line: username and pill */}
-                          <div className="flex items-center gap-2 flex-wrap min-w-0">
-                            <h4 className="text-sm md:text-base tracking-tight font-medium group-hover:text-[#934afb] transition-colors truncate leading-none py-0.5">
+                          <div className="flex items-center gap-2 min-w-0 overflow-visible">
+                            <h4 className="text-sm md:text-base tracking-tight font-medium group-hover:text-[#934afb] transition-colors overflow-visible whitespace-nowrap leading-none">
                               {follow.node.displayName}
                             </h4>
                             {isMutual && (
-                              <span className="inline-block px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-semibold bg-[#934afb]/15 text-[#934afb] border border-[#934afb]/30 shrink-0 pointer-events-none select-none leading-normal">
+                              <span 
+                                className="inline-block px-2 rounded-full text-[9px] md:text-[10px] font-semibold bg-[#934afb]/15 text-[#934afb] border border-[#934afb]/30 shrink-0 pointer-events-none select-none leading-none translate-y-[1.5px]"
+                                style={{ paddingBlock: 'calc(var(--spacing) * 1)' }}
+                              >
                                 FOLLOWS BACK
                               </span>
                             )}
