@@ -8,10 +8,10 @@ const USER_BASE_QUERY = `
       login
       displayName
       profileImageURL(width: 150)
-      following: follows(first: 1, order: DESC) {
+      following: follows(first: 1) {
         totalCount
       }
-      followers(first: 1, order: DESC) {
+      followers(first: 1) {
         totalCount
       }
     }
@@ -21,7 +21,7 @@ const USER_BASE_QUERY = `
 const FOLLOWS_QUERY = `
   query GetDataB($login: String!, $cursor: Cursor) {
     user(login: $login) {
-      follows(first: 100, after: $cursor, order: DESC) {
+      follows(first: 100, order: DESC, after: $cursor) {
         totalCount
         edges {
           followedAt
@@ -45,7 +45,7 @@ const FOLLOWS_QUERY = `
 const FOLLOWERS_QUERY = `
   query GetDataC($login: String!, $cursor: Cursor) {
     user(login: $login) {
-      followers(first: 100, after: $cursor, order: DESC) {
+      followers(first: 100, order: DESC, after: $cursor) {
         totalCount
         edges {
           followedAt
@@ -143,7 +143,8 @@ export async function fetchProfile(login: string): Promise<TwitchProfile | null>
         totalCount: (user.followers?.totalCount || 0) as number,
         edges: (user.followers?.edges || []) as any[],
         pageInfo: (user.followers?.pageInfo || { hasNextPage: false, endCursor: null })
-      }
+      },
+      _authStatus: response.data?._authStatus
     };
   } catch (error) {
     console.error('[Service] Error in fetchProfile:', error);

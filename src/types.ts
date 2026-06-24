@@ -22,4 +22,9 @@ export interface FollowingData {
 export interface TwitchProfile extends TwitchUser {
   following: FollowingData;
   followers: FollowingData;
+  _authStatus?: {
+    configured: boolean;
+    valid: boolean;
+    error: string | null;
+  };
 }
