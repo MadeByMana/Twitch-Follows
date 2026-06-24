@@ -105,6 +105,7 @@ async function startServer() {
       const clientToken = req.headers['x-twitch-token'] as string;
       const rawToken = clientToken ? clientToken.trim() : (process.env.TWITCH_OAUTH_TOKEN ? process.env.TWITCH_OAUTH_TOKEN.trim() : '');
       token = cleanTwitchToken(rawToken);
+      const configSource = clientToken ? 'local' : (process.env.TWITCH_OAUTH_TOKEN ? 'server' : '');
       
       // Exclude obvious placeholder strings or empty values
       if (
@@ -211,11 +212,16 @@ async function startServer() {
                 headers: mobileHeaders,
               });
 
-              const mobileHasIntegrityOrAuthError = !!mobileResponse.data?.errors?.some((err: any) => 
-                err.message?.toLowerCase().includes('failed integrity check') ||
-                err.code === 'IntegrityCheckFailed' ||
+              const mobileHasAuthError = !!mobileResponse.data?.errors?.some((err: any) => 
                 err.message?.toLowerCase().includes('authorization') ||
-                err.message?.toLowerCase().includes('invalid oauth')
+                err.message?.toLowerCase().includes('invalid oauth') ||
+                err.message?.toLowerCase().includes('token is invalid') ||
+                err.message?.toLowerCase().includes('token invalid')
+              );
+
+              const mobileHasIntegrityOrAuthError = mobileHasAuthError || !!mobileResponse.data?.errors?.some((err: any) => 
+                err.message?.toLowerCase().includes('failed integrity check') ||
+                err.code === 'IntegrityCheckFailed'
               );
 
               if (!mobileHasIntegrityOrAuthError) {
@@ -223,8 +229,8 @@ async function startServer() {
                 const payload = {
                   ...mobileResponse.data,
                   _authStatus: {
-                    configured: true,
-                    valid: !mobileResponse.data?.errors,
+                    configured: configSource,
+                    valid: !mobileHasAuthError,
                     error: mobileResponse.data?.errors ? 'GraphQL execution had errors' : null
                   }
                 };
@@ -247,7 +253,7 @@ async function startServer() {
             const payload = {
               ...fallbackResponse.data,
               _authStatus: {
-                configured: true,
+                configured: configSource,
                 valid: false,
                 error: 'The provided Twitch OAuth token is invalid, expired, or rejected.'
               }
@@ -258,11 +264,18 @@ async function startServer() {
           }
         }
 
+        const isTokenInvalid = !!response.data?.errors?.some((err: any) =>
+          err.message?.toLowerCase().includes('authorization') ||
+          err.message?.toLowerCase().includes('invalid oauth') ||
+          err.message?.toLowerCase().includes('token is invalid') ||
+          err.message?.toLowerCase().includes('token invalid')
+        );
+
         const payload = {
           ...response.data,
           _authStatus: {
-            configured: true,
-            valid: !response.data?.errors,
+            configured: configSource,
+            valid: !isTokenInvalid,
             error: response.data?.errors ? 'GraphQL execution had errors' : null
           }
         };
@@ -281,7 +294,7 @@ async function startServer() {
             const payload = {
               ...fallbackResponse.data,
               _authStatus: {
-                configured: true,
+                configured: configSource,
                 valid: false,
                 error: `Invalid or expired TWITCH_OAUTH_TOKEN (${error.response?.status} error)`
               }
@@ -299,12 +312,14 @@ async function startServer() {
       const responseData = error.response?.data;
       console.error('Proxy Error Status:', error.response?.status);
       console.error('Proxy Error Data:', JSON.stringify(responseData, null, 2));
+      const clientToken = req.headers['x-twitch-token'] as string;
+      const configSource = clientToken ? 'local' : (process.env.TWITCH_OAUTH_TOKEN ? 'server' : '');
       
       res.status(error.response?.status || 500).json({ 
         error: 'Terminal execution failed',
         details: responseData || error.message,
         _authStatus: {
-          configured: !!token,
+          configured: configSource,
           valid: false,
           error: error.message
         }

@@ -630,16 +630,34 @@ export default function App() {
                           <p className="text-xs text-zinc-400 mt-1">This Twitch user is not {activeTab === 'following' ? 'following anyone' : 'followed by anyone'} yet.</p>
                         </div>
                       </div>
-                    ) : (
+                     ) : (
                       <div className="bg-[#18181b] border border-transparent rounded-2xl p-6 md:p-8 flex flex-col items-center text-center gap-4 max-w-xl mx-auto mt-4 w-full animate-fade-in">
                         <div className="w-12 h-12 rounded-full bg-[#934afb]/10 flex items-center justify-center text-[#934afb]">
                           <Info className="w-6 h-6" />
                         </div>
                         <div className="flex flex-col gap-2">
-                          <h4 className="text-base font-semibold text-white">Followers List Restricted by Twitch</h4>
-                          <p className="text-sm text-zinc-400 leading-relaxed">
-                            Twitch recently enforced stricter GraphQL authorization. Unauthenticated public requests can retrieve the totals, but are restricted from listing individual user profiles.
-                          </p>
+                          {profile._authStatus?.valid ? (
+                            <>
+                              <h4 className="text-base font-semibold text-white">
+                                {activeTab === 'followers' ? 'Followers' : 'Following'} List Restricted
+                              </h4>
+                              <p className="text-sm text-zinc-400 leading-relaxed">
+                                Your Twitch OAuth token is <strong className="text-green-400 font-semibold">Active & Verified</strong>, but Twitch strictly restricts retrieving the {activeTab} list of <em>other channels</em> via GraphQL.
+                              </p>
+                              <p className="text-xs text-zinc-500 leading-relaxed">
+                                You can only view detailed lists for your own channel (the one matching your OAuth token). For other channels, Twitch only permits displaying the total counts.
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <h4 className="text-base font-semibold text-white">
+                                {activeTab === 'followers' ? 'Followers' : 'Following'} List Restricted by Twitch
+                              </h4>
+                              <p className="text-sm text-zinc-400 leading-relaxed">
+                                Twitch recently enforced stricter GraphQL authorization. Unauthenticated public requests can retrieve the totals, but are restricted from listing individual user profiles.
+                              </p>
+                            </>
+                          )}
                           
                           {profile._authStatus && (
                             <div className="mt-2.5 p-3 rounded-xl bg-zinc-900/90 border border-zinc-800/80 flex flex-col gap-2 text-left text-xs">
