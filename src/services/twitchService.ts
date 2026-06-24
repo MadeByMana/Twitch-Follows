@@ -1,6 +1,18 @@
 import axios from 'axios';
 import { TwitchProfile } from '../types';
 
+function getAuthHeaders() {
+  const token = localStorage.getItem('twitch_oauth_token');
+  if (token) {
+    return {
+      headers: {
+        'x-twitch-token': token.trim()
+      }
+    };
+  }
+  return {};
+}
+
 const USER_BASE_QUERY = `
   query GetDataA($login: String!) {
     user(login: $login) {
@@ -118,7 +130,7 @@ export async function fetchProfile(login: string): Promise<TwitchProfile | null>
         }
       `,
       variables: { login: loginLower }
-    });
+    }, getAuthHeaders());
 
     if (response.data?.errors) {
       const msg = response.data.errors[0]?.message || 'GraphQL Error';
@@ -160,7 +172,7 @@ export async function fetchFollowsPage(login: string, cursor: string | null): Pr
       opName: 'GetDataB',
       query: FOLLOWS_QUERY,
       variables: { login: loginLower, cursor }
-    });
+    }, getAuthHeaders());
 
     if (resp.data?.errors) {
       const msg = `GetDataB Errors: ${JSON.stringify(resp.data.errors)}`;
@@ -183,7 +195,7 @@ export async function fetchFollowersPage(login: string, cursor: string | null): 
       opName: 'GetDataC',
       query: FOLLOWERS_QUERY,
       variables: { login: loginLower, cursor }
-    });
+    }, getAuthHeaders());
 
     if (resp.data?.errors) {
       const msg = `GetDataC Errors: ${resp.data.errors[0]?.message || JSON.stringify(resp.data.errors)}`;

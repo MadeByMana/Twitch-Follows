@@ -72,9 +72,11 @@ async function startServer() {
 
   app.post('/internal/data/stream', async (req, res) => {
     const { opName } = req.body;
+    let token = '';
     try {
       logToFile(`[Proxy] Process ${opName || 'unknown'}`);
-      let token = process.env.TWITCH_OAUTH_TOKEN ? process.env.TWITCH_OAUTH_TOKEN.trim() : '';
+      const clientToken = req.headers['x-twitch-token'] as string;
+      token = clientToken ? clientToken.trim() : (process.env.TWITCH_OAUTH_TOKEN ? process.env.TWITCH_OAUTH_TOKEN.trim() : '');
       // Exclude obvious placeholder strings or empty values
       if (
         token && (
@@ -250,7 +252,7 @@ async function startServer() {
         error: 'Terminal execution failed',
         details: responseData || error.message,
         _authStatus: {
-          configured: !!process.env.TWITCH_OAUTH_TOKEN,
+          configured: !!token,
           valid: false,
           error: error.message
         }

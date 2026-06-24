@@ -46,10 +46,12 @@ const handler: Handler = async (event) => {
 
   const body = event.body ? JSON.parse(event.body) : {};
   const { opName } = body;
+  let token = '';
 
   try {
     console.log(`[Netlify Proxy] Process ${opName || 'unknown'}`);
-    let token = process.env.TWITCH_OAUTH_TOKEN ? process.env.TWITCH_OAUTH_TOKEN.trim() : '';
+    const clientToken = event.headers['x-twitch-token'] || event.headers['X-Twitch-Token'];
+    token = clientToken ? clientToken.trim() : (process.env.TWITCH_OAUTH_TOKEN ? process.env.TWITCH_OAUTH_TOKEN.trim() : '');
     
     // Exclude obvious placeholder strings or empty values
     if (
@@ -232,7 +234,7 @@ const handler: Handler = async (event) => {
         error: 'Terminal execution failed',
         details: responseData || error.message,
         _authStatus: {
-          configured: !!process.env.TWITCH_OAUTH_TOKEN,
+          configured: !!token,
           valid: false,
           error: error.message
         }

@@ -74,7 +74,32 @@ export default function App() {
   const [loadingFollowing, setLoadingFollowing] = useState(false);
   const [loadingFollowers, setLoadingFollowers] = useState(false);
   const [activeTab, setActiveTab] = useState<'following' | 'followers'>('following');
+  const [localToken, setLocalToken] = useState(() => localStorage.getItem('twitch_oauth_token') || '');
   const loadRequestId = useRef(0);
+
+  const handleSaveToken = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (localToken.trim()) {
+      localStorage.setItem('twitch_oauth_token', localToken.trim());
+    } else {
+      localStorage.removeItem('twitch_oauth_token');
+    }
+    // Re-fetch current profile to update status
+    if (profile) {
+      handleSearch(undefined, profile.login);
+    } else if (username.trim()) {
+      handleSearch(undefined, username);
+    }
+  };
+
+  const handleClearToken = () => {
+    localStorage.removeItem('twitch_oauth_token');
+    setLocalToken('');
+    // Re-fetch current profile to update status
+    if (profile) {
+      handleSearch(undefined, profile.login);
+    }
+  };
 
   useEffect(() => {
     setJumpPageVal(currentPage.toString());
@@ -648,14 +673,45 @@ export default function App() {
                         <div className="w-full border-t border-zinc-800/60 my-1 pt-4 flex flex-col gap-3 text-left">
                           <span className="text-xs font-semibold text-zinc-300 font-mono uppercase tracking-wider">How to Unlock lists:</span>
                           <p className="text-xs text-zinc-400 leading-relaxed">
-                            To load full details, configure a secure <code className="bg-zinc-800/80 px-1.5 py-0.5 rounded text-white font-mono text-[10px]">TWITCH_OAUTH_TOKEN</code> in your environment secrets.
+                            To load full details, configure a secure <code className="bg-zinc-800/80 px-1.5 py-0.5 rounded text-white font-mono text-[10px]">TWITCH_OAUTH_TOKEN</code> in your Netlify site environment variables.
                           </p>
                           <ol className="list-decimal list-inside text-xs text-zinc-400 space-y-1 bg-zinc-900/50 p-3 rounded-lg border border-zinc-800/40 font-sans">
                             <li>Open the <span className="text-[#934afb] font-medium">Twitch website</span> in your browser and log in.</li>
                             <li>Open Developer Tools (<kbd className="bg-zinc-800 px-1 py-0.5 rounded font-mono text-[10px]">F12</kbd> or right-click &gt; Inspect).</li>
                             <li>Go to the <strong className="text-zinc-300">Console</strong> or <strong className="text-zinc-300">Network</strong> tab, copy your <strong className="text-zinc-300">Authorization</strong> token (starts with <code className="bg-zinc-800/80 px-1 py-0.5 rounded font-mono text-[10px]">OAuth</code>).</li>
-                            <li>Add the token as <code className="bg-zinc-800/80 px-1 py-0.5 rounded text-white font-mono text-[10px]">TWITCH_OAUTH_TOKEN</code> in your workspace secrets.</li>
+                            <li>Add the token as <code className="bg-zinc-800/80 px-1 py-0.5 rounded text-white font-mono text-[10px]">TWITCH_OAUTH_TOKEN</code> in your Netlify environment variables or workspace secrets.</li>
                           </ol>
+
+                          <div className="mt-2.5 p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/80 flex flex-col gap-3">
+                            <span className="text-xs font-semibold text-zinc-300 font-mono uppercase tracking-wider">Or Apply OAuth Token Locally:</span>
+                            <p className="text-xs text-zinc-400 leading-normal">
+                              Paste your token here to test or unlock immediately in this session. It will be stored in your browser's local storage and passed securely.
+                            </p>
+                            <form onSubmit={handleSaveToken} className="flex gap-2">
+                              <input
+                                type="text"
+                                placeholder="OAuth xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                                value={localToken}
+                                onChange={(e) => setLocalToken(e.target.value)}
+                                className="flex-1 bg-[#18181b] border border-zinc-800 focus:border-[#934afb] rounded-lg px-3 py-1.5 text-xs text-white outline-none font-mono"
+                              />
+                              <button
+                                type="submit"
+                                className="bg-[#934afb] hover:bg-[#a15eff] active:bg-[#8239eb] text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                              >
+                                Save & Apply
+                              </button>
+                              {localStorage.getItem('twitch_oauth_token') && (
+                                <button
+                                  type="button"
+                                  onClick={handleClearToken}
+                                  className="bg-zinc-800 hover:bg-zinc-700 hover:text-red-400 text-zinc-400 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                                >
+                                  Clear
+                                </button>
+                              )}
+                            </form>
+                          </div>
                         </div>
                       </div>
                     )
