@@ -648,7 +648,7 @@ export default function App() {
                                 <div className="flex items-center justify-between gap-4">
                                   <span className="text-zinc-400">Token Configured:</span>
                                   <span className={`font-mono px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase leading-none ${profile._authStatus.configured ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
-                                    {profile._authStatus.configured ? 'YES' : 'NO'}
+                                    {profile._authStatus.configured === 'local' ? 'YES (LOCAL)' : profile._authStatus.configured === 'server' ? 'YES (SERVER)' : 'NO'}
                                   </span>
                                 </div>
                                 {profile._authStatus.configured && (
@@ -841,13 +841,25 @@ export default function App() {
             <span className="flex items-center gap-1.5">
               Status: <span className="text-green-500">API Connected</span>
             </span>
-            {profile?._authStatus && (
-              <span className="flex items-center gap-1.5">
-                Auth: <span className={(profile._authStatus.configured && profile._authStatus.valid) ? 'text-green-500' : 'text-amber-500'}>
-                  {(profile._authStatus.configured && profile._authStatus.valid) ? 'Active Token' : 'Unauthenticated (Fallback)'}
-                </span>
+            <span className="flex items-center gap-1.5">
+              Auth: <span className={
+                profile?._authStatus?.valid
+                  ? 'text-green-500'
+                  : localStorage.getItem('twitch_oauth_token')
+                    ? 'text-zinc-400'
+                    : 'text-amber-500'
+              }>
+                {profile?._authStatus
+                  ? profile._authStatus.valid
+                    ? profile._authStatus.configured === 'local'
+                      ? 'Active Token (Local)'
+                      : 'Active Token (Server)'
+                    : 'Unauthenticated (Fallback)'
+                  : localStorage.getItem('twitch_oauth_token')
+                    ? 'Token Configured (Local)'
+                    : 'Unauthenticated'}
               </span>
-            )}
+            </span>
           </div>
           <div>
             <span>Made By Mana &copy; 2026</span>
