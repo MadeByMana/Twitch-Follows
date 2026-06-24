@@ -436,7 +436,7 @@ export default function App() {
           >
             {/* Sync control banner if there is more data on Twitch and background sync hasn't started */}
             {hasMore && !syncStarted && (
-              <div className="col-span-full bg-[#18181b] border border-amber-500/20 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="col-span-full bg-[#18181b] border border-transparent rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0">
                     <Info className="w-5 h-5" />
@@ -523,7 +523,7 @@ export default function App() {
                         setFilterText(e.target.value);
                         setCurrentPage(1);
                       }}
-                      className="w-full h-full bg-[#18181b] border border-zinc-800/60 hover:border-zinc-700 focus:border-[#934afb] rounded-lg px-3 pt-0 pb-[2px] outline-none transition-all text-xs font-medium text-white placeholder-zinc-500 leading-none select-text"
+                      className="w-full h-full bg-[#18181b] border border-transparent hover:border-zinc-800 focus:border-[#934afb] rounded-lg px-3 pt-0 pb-[2px] outline-none transition-all text-xs font-medium text-white placeholder-zinc-500 leading-none select-text"
                     />
                   </div>
 
@@ -631,7 +631,7 @@ export default function App() {
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-[#18181b] border border-zinc-800/80 rounded-2xl p-6 md:p-8 flex flex-col items-center text-center gap-4 max-w-xl mx-auto mt-4 w-full animate-fade-in">
+                      <div className="bg-[#18181b] border border-transparent rounded-2xl p-6 md:p-8 flex flex-col items-center text-center gap-4 max-w-xl mx-auto mt-4 w-full animate-fade-in">
                         <div className="w-12 h-12 rounded-full bg-[#934afb]/10 flex items-center justify-center text-[#934afb]">
                           <Info className="w-6 h-6" />
                         </div>
@@ -843,8 +843,8 @@ export default function App() {
             </span>
             {profile?._authStatus && (
               <span className="flex items-center gap-1.5">
-                Auth: <span className={profile._authStatus.valid ? 'text-green-500' : 'text-amber-500'}>
-                  {profile._authStatus.valid ? 'Active Token' : 'Unauthenticated (Fallback)'}
+                Auth: <span className={(profile._authStatus.configured && profile._authStatus.valid) ? 'text-green-500' : 'text-amber-500'}>
+                  {(profile._authStatus.configured && profile._authStatus.valid) ? 'Active Token' : 'Unauthenticated (Fallback)'}
                 </span>
               </span>
             )}

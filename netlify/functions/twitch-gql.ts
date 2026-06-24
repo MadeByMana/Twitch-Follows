@@ -181,7 +181,7 @@ const handler: Handler = async (event) => {
         ...response.data,
         _authStatus: {
           configured: !!token,
-          valid: !response.data?.errors,
+          valid: !!token && !response.data?.errors,
           error: token ? (response.data?.errors ? 'GraphQL execution had errors' : null) : 'No TWITCH_OAUTH_TOKEN configured in environment'
         }
       };
