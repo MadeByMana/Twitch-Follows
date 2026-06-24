@@ -76,19 +76,12 @@ const handler: Handler = async (event) => {
     let requestHeaders: Record<string, string>;
     if (token) {
       requestHeaders = {
-        'Client-ID': 'kimne7iekaqgq7vqcsq7z4ff5nywb9', // Web Client ID
+        'Client-ID': '85lcqzxpb9bqu9z6ga1ol55du', // Mobile Client ID (no integrity requirement)
         'Content-Type': 'application/json',
         'Authorization': token.toLowerCase().startsWith('oauth ') ? token : `OAuth ${token}`,
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Origin': 'https://www.twitch.tv',
-        'Referer': 'https://www.twitch.tv/',
+        'User-Agent': 'Twitch/15.8.1 (iPhone; iOS 15.5; Scale/2.00)',
       };
-
-      const integrityToken = await getIntegrityToken(token);
-      if (integrityToken) {
-        requestHeaders['Client-Integrity'] = integrityToken;
-      }
-      console.log('[Netlify Proxy] Using Authenticated Web Client ID with Browser Headers & Client-Integrity');
+      console.log('[Netlify Proxy] Using Authenticated Mobile Client ID (No Integrity Needed)');
     } else {
       requestHeaders = { ...fallbackHeaders };
       console.log('[Netlify Proxy] Using Unauthenticated Mobile Client ID');
@@ -99,62 +92,16 @@ const handler: Handler = async (event) => {
         headers: requestHeaders,
       });
 
-      // Handle GraphQL integrity check or authentication errors embedded in a successful 200 response
-      const hasIntegrityOrAuthError = !!response.data?.errors?.some((err: any) => 
-        err.message?.toLowerCase().includes('failed integrity check') ||
-        err.code === 'IntegrityCheckFailed' ||
+      // Handle authentication errors embedded in a successful 200 response
+      const hasAuthError = !!response.data?.errors?.some((err: any) => 
         err.message?.toLowerCase().includes('authorization') ||
         err.message?.toLowerCase().includes('invalid oauth')
       );
 
-      if (hasIntegrityOrAuthError && requestHeaders['Authorization']) {
-        // If the Web Client ID failed with an integrity error, first retry using the Authenticated Mobile Client ID (no integrity requirement)
-        if (requestHeaders['Client-ID'] !== '85lcqzxpb9bqu9z6ga1ol55du') {
-          try {
-            console.log('[Netlify Proxy] Web Client ID failed integrity/auth. Retrying with Authenticated Mobile Client ID...');
-            const authenticatedMobileHeaders = {
-              'Client-ID': '85lcqzxpb9bqu9z6ga1ol55du',
-              'Content-Type': 'application/json',
-              'Authorization': token.toLowerCase().startsWith('oauth ') ? token : `OAuth ${token}`,
-              'User-Agent': 'Twitch/15.8.1 (iPhone; iOS 15.5; Scale/2.00)',
-            };
-            const mobileAuthResponse = await axios.post('https://gql.twitch.tv/gql', body, {
-              headers: authenticatedMobileHeaders,
-            });
-
-            const mobileHasIntegrityOrAuthError = !!mobileAuthResponse.data?.errors?.some((err: any) => 
-              err.message?.toLowerCase().includes('failed integrity check') ||
-              err.code === 'IntegrityCheckFailed' ||
-              err.message?.toLowerCase().includes('authorization') ||
-              err.message?.toLowerCase().includes('invalid oauth')
-            );
-
-            if (!mobileHasIntegrityOrAuthError) {
-              console.log('[Netlify Proxy] Authenticated Mobile Client ID retry succeeded!');
-              const payload = {
-                ...mobileAuthResponse.data,
-                _authStatus: {
-                  configured: true,
-                  valid: !mobileAuthResponse.data?.errors,
-                  error: null
-                }
-              };
-              return {
-                statusCode: 200,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-              };
-            } else {
-              console.log('[Netlify Proxy] Authenticated Mobile Client ID retry also had integrity/auth errors.');
-            }
-          } catch (mobileAuthError: any) {
-            console.error('[Netlify Proxy] Authenticated Mobile Client ID retry failed:', mobileAuthError.message);
-          }
-        }
-
-        // If the authenticated mobile client ID also failed, or was already used, fallback to unauthenticated mobile client ID
+      if (hasAuthError && requestHeaders['Authorization']) {
+        // Fallback to unauthenticated mobile client ID
         try {
-          console.log('[Netlify Proxy] Falling back to unauthenticated Mobile Client ID...');
+          console.log('[Netlify Proxy] Falling back to unauthenticated Mobile Client ID due to auth error...');
           const fallbackResponse = await axios.post('https://gql.twitch.tv/gql', body, {
             headers: fallbackHeaders,
           });
@@ -164,7 +111,7 @@ const handler: Handler = async (event) => {
             _authStatus: {
               configured: true,
               valid: false,
-              error: 'Fell back to unauthenticated due to remote integrity or auth error in response body'
+              error: 'Fell back to unauthenticated due to remote auth error in response body'
             }
           };
           return {
